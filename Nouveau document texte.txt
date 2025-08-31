@@ -1,0 +1,164 @@
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+public class BorderDesignerApp extends JFrame {
+    private JTable _table;
+    private final Map<Point, Border> _borders = new HashMap<>();
+    private Border _copiedBorder;
+
+    public BorderDesignerApp() {
+        super("Border Designer");
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // === Table Setup ===
+        DefaultTableModel model = new DefaultTableModel(10, 5);
+        _table = new JTable(model) {
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+                Component comp = super.prepareRenderer(renderer, row, column);
+
+                // Apply custom borders if set
+                Border b = _borders.get(new Point(row, column));
+                if (b != null && comp instanceof JComponent jc) {
+                    jc.setBorder(b);
+                } else if (comp instanceof JComponent jc) {
+                    jc.setBorder(UIManager.getBorder("Table.cellBorder"));
+                }
+
+                return comp;
+            }
+        };
+        _table.setCellSelectionEnabled(true);
+        _table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        JScrollPane scrollPane = new JScrollPane(_table);
+
+        // === Add table + checkbox panel ===
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JCheckBox groupSeparatorCheck = new JCheckBox("Add grouping separator");
+        bottomPanel.add(groupSeparatorCheck);
+
+        add(scrollPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        // Setup popup
+        _setupPopupMenus();
+
+        setSize(600, 400);
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private void _setupPopupMenus() {
+        JPopupMenu popup = new JPopupMenu();
+        JMenuItem editBorders = new JMenuItem("Edit Borders...");
+        JMenuItem copyBorders = new JMenuItem("Copy Borders");
+        JMenuItem pasteBorders = new JMenuItem("Paste Borders");
+
+        // === Edit Borders ===
+        editBorders.addActionListener(e -> {
+            if (_table.getTableHeader().getMousePosition() != null) {
+                // Header clicked
+                int col = _table.getTableHeader().columnAtPoint(_table.getTableHeader().getMousePosition());
+                if (col >= 0) _editBorders(new Point[]{new Point(-1, col)});
+            } else {
+                // Normal cells
+                int[] rows = _table.getSelectedRows();
+                int[] cols = _table.getSelectedColumns();
+                List<Point> pts = new ArrayList<>();
+                for (int r : rows) for (int c : cols) pts.add(new Point(r, c));
+                if (!pts.isEmpty()) _editBorders(pts.toArray(new Point[0]));
+            }
+        });
+
+        // === Copy Borders ===
+        copyBorders.addActionListener(e -> {
+            if (_table.getTableHeader().getMousePosition() != null) {
+                int col = _table.getTableHeader().columnAtPoint(_table.getTableHeader().getMousePosition());
+                if (col >= 0) _copyBorders(new Point(-1, col));
+            } else {
+                int r = _table.getSelectedRow();
+                int c = _table.getSelectedColumn();
+                if (r >= 0 && c >= 0) _copyBorders(new Point(r, c));
+            }
+        });
+
+        // === Paste Borders ===
+        pasteBorders.addActionListener(e -> {
+            if (_copiedBorder == null) {
+                JOptionPane.showMessageDialog(this, "No borders copied yet!");
+                return;
+            }
+            if (_table.getTableHeader().getMousePosition() != null) {
+                int col = _table.getTableHeader().columnAtPoint(_table.getTableHeader().getMousePosition());
+                if (col >= 0) _pasteBorders(new Point[]{new Point(-1, col)});
+            } else {
+                int[] rows = _table.getSelectedRows();
+                int[] cols = _table.getSelectedColumns();
+                List<Point> pts = new ArrayList<>();
+                for (int r : rows) for (int c : cols) pts.add(new Point(r, c));
+                if (!pts.isEmpty()) _pasteBorders(pts.toArray(new Point[0]));
+            }
+        });
+
+        popup.add(editBorders);
+        popup.add(copyBorders);
+        popup.add(pasteBorders);
+
+        // Attach to both
+        _table.setComponentPopupMenu(popup);
+        _table.getTableHeader().setComponentPopupMenu(popup);
+    }
+
+    private void _editBorders(Point[] points) {
+        JCheckBox top = new JCheckBox("Top");
+        JCheckBox left = new JCheckBox("Left");
+        JCheckBox bottom = new JCheckBox("Bottom");
+        JCheckBox right = new JCheckBox("Right");
+
+        JPanel panel = new JPanel(new GridLayout(2, 2));
+        panel.add(top);
+        panel.add(left);
+        panel.add(bottom);
+        panel.add(right);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Select Borders",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            Border border = BorderFactory.createMatteBorder(
+                    top.isSelected() ? 1 : 0,
+                    left.isSelected() ? 1 : 0,
+                    bottom.isSelected() ? 1 : 0,
+                    right.isSelected() ? 1 : 0,
+                    Color.BLACK);
+
+            for (Point p : points) {
+                _borders.put(p, border);
+            }
+            _table.repaint();
+        }
+    }
+
+    private void _copyBorders(Point point) {
+        _copiedBorder = _borders.get(point);
+    }
+
+    private void _pasteBorders(Point[] points) {
+        if (_copiedBorder == null) return;
+        for (Point p : points) {
+            _borders.put(p, _copiedBorder);
+        }
+        _table.repaint();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(BorderDesignerApp::new);
+    }
+}
