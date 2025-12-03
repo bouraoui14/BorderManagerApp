@@ -1,29 +1,26 @@
 String template = String.format(
     "<html><head><style>"
-    + "body{font-family:Arial,Helvetica,sans-serif;color:#333;margin:0;padding:15px;}"
+    + "body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;padding:15px;}"
     
-    /* Title bar (dark blue, white text) */
-    + "h2{background:#003366;color:#fff;padding:10px;margin:0 0 12px 0;font-size:16px;}"
+    /* Title bar */
+    + "h2{background:#2596be;color:#fff;padding:10px;margin:0 0 12px 0;"
+    + "font-size:16px;font-weight:normal;}"
 
-    /* Table layout */
+    /* Table */
     + "table{border-collapse:collapse;width:100%%;font-size:14px;}"
 
-    /* Table borders */
-    + "th,td{border:1px solid #c0c0c0;padding:8px;text-align:left;}"
+    /* Header cells */
+    + "th{background:#2596be;color:#ffffff;padding:8px;text-align:left;"
+    + "font-weight:normal;border:1px solid #999;}"
 
-    /* Header style (dark blue, white text) */
-    + "th{background:#003366;color:#fff;font-weight:bold;}"
-
-    /* Even row background color */
-    + "tbody tr:nth-child(even){background:#f0f0f0;}"
-
-    /* Hover row color */
-    + "tbody tr:hover{background:#eaeaea;}"
+    /* Body cells */
+    + "td{background:#c0c0c0;color:#000000;padding:8px;text-align:left;"
+    + "font-weight:normal;border:1px solid #999;}"
 
     + "</style></head>"
     + "<body>"
-    + "<h2>Please correct the following rows before they can be sent to Mobilis:</h2>"
 
+    + "<h2>Please correct the following rows before they can be sent to Mobilis:</h2>"
     + "<table>"
     + "<thead><tr>"
     + "<th>Ex Date</th>"
@@ -35,6 +32,7 @@ String template = String.format(
     + "<th>Component</th>"
     + "</tr></thead>"
     + "<tbody>%s</tbody></table>"
+
     + "</body></html>",
     bodyRows
 );
